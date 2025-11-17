@@ -1,6 +1,8 @@
 spring:
   application:
     name: liu-ai-code-mother-backend
+  profiles:
+    active: local
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -25,3 +27,19 @@ knife4j:
   enable: true
   setting:
     language: zh_cn
+
+
+# AI
+langchain4j:
+  open-ai:
+    chat-model:
+      base-url: https://api.deepseek.com
+      api-key: <Your API Key>
+      model-name: deepseek-chat
+      strict-json-schema: true
+      max-token: 8192
+      response-format: json_object
+      log-requests: true
+      log-responses: true
+
+
