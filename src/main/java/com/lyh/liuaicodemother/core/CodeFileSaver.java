@@ -9,6 +9,9 @@ import com.lyh.liuaicodemother.model.enums.CodeGenTypeEnum;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * 文件保存器
+ */
 public class CodeFileSaver {
 
     // 文件保存根目录
