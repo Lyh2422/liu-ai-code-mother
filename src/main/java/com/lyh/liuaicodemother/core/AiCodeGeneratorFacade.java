@@ -1,6 +1,7 @@
 package com.lyh.liuaicodemother.core;
 
 import com.lyh.liuaicodemother.ai.AiCodeGeneratorService;
+import com.lyh.liuaicodemother.ai.AiCodeGeneratorServiceFactory;
 import com.lyh.liuaicodemother.ai.model.HtmlCodeResult;
 import com.lyh.liuaicodemother.ai.model.MultiFileCodeResult;
 import com.lyh.liuaicodemother.core.parser.CodeParserExecutor;
@@ -22,7 +23,7 @@ import java.io.File;
 public class AiCodeGeneratorFacade {
 
     @Resource
-    private AiCodeGeneratorService aiCodeGeneratorService;
+    private AiCodeGeneratorServiceFactory aiCodeGeneratorServiceFactory;
 
     /**
      * 通用流式代码处理方法
@@ -62,6 +63,8 @@ public class AiCodeGeneratorFacade {
         if (codeGenTypeEnum == null) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "生成类型为空");
         }
+        //根据appId 获取相应的 AI服务实例
+        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId);
         return switch (codeGenTypeEnum) {
             case HTML -> {
                 HtmlCodeResult result = aiCodeGeneratorService.generateHtmlCode(userMessage);
@@ -88,6 +91,8 @@ public class AiCodeGeneratorFacade {
         if (codeGenTypeEnum == null) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "生成类型为空");
         }
+        //根据appId 获取相应的 AI服务实例
+        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId);
         return switch (codeGenTypeEnum) {
             case HTML -> {
                 Flux<String> codeStream = aiCodeGeneratorService.generateHtmlCodeStream(userMessage);
