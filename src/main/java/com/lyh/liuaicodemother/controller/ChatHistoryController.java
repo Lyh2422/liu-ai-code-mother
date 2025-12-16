@@ -10,7 +10,7 @@ import com.lyh.liuaicodemother.model.entity.User;
 import com.lyh.liuaicodemother.service.UserService;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
-import constant.UserConstant;
+import com.lyh.liuaicodemother.constant.UserConstant;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;

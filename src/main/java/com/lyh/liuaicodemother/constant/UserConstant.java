@@ -1,4 +1,4 @@
-package constant;
+package com.lyh.liuaicodemother.constant;
 
 public interface UserConstant {
 

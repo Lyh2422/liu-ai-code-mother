@@ -14,10 +14,9 @@ import com.lyh.liuaicodemother.model.vo.LoginUserVO;
 import com.lyh.liuaicodemother.model.vo.UserVO;
 import com.lyh.liuaicodemother.service.UserService;
 import com.mybatisflex.core.paginate.Page;
-import constant.UserConstant;
+import com.lyh.liuaicodemother.constant.UserConstant;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

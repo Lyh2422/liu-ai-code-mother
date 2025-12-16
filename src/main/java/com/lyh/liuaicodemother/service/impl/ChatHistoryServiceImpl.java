@@ -15,7 +15,7 @@ import com.mybatisflex.spring.service.impl.ServiceImpl;
 import com.lyh.liuaicodemother.model.entity.ChatHistory;
 import com.lyh.liuaicodemother.mapper.ChatHistoryMapper;
 import com.lyh.liuaicodemother.service.ChatHistoryService;
-import constant.UserConstant;
+import com.lyh.liuaicodemother.constant.UserConstant;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
