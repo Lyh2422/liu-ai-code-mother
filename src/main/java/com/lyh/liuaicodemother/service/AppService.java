@@ -1,6 +1,7 @@
 package com.lyh.liuaicodemother.service;
 
 
+import com.lyh.liuaicodemother.model.dto.app.AppAddRequest;
 import com.lyh.liuaicodemother.model.dto.app.AppQueryRequest;
 import com.lyh.liuaicodemother.model.entity.App;
 import com.lyh.liuaicodemother.model.entity.User;
@@ -17,6 +18,8 @@ import java.util.List;
  * @author lyh
  */
 public interface AppService extends IService<App> {
+
+    Long createApp(AppAddRequest appAddRequest, User loginUser);
 
     /**
      * 获取应用封装类
