@@ -12,10 +12,10 @@ import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
+import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.support.ui.WebDriverWait;
-
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -26,41 +26,57 @@ import java.util.UUID;
 public class WebScreenshotUtils {
 
     /**
-     * 初始化 Chrome 浏览器驱动
+     * 初始化 Firefox 浏览器驱动（修正命名，移除Chrome相关配置）
      */
-    private static WebDriver initChromeDriver(int width, int height) {
+    private static WebDriver initFirefoxDriver(int width, int height) {
         try {
-            WebDriverManager.chromedriver().setup();
-            ChromeOptions options = new ChromeOptions();
-            // 新版headless解决CDP警告
+            // 1. 自动管理Firefox的驱动（GeckoDriver）
+            WebDriverManager.firefoxdriver().setup();
+
+            // 2. 配置Firefox选项（仅保留Firefox支持的参数，移除Chrome专属参数）
+            FirefoxOptions options = new FirefoxOptions();
+
+            // 关键：指定Firefox二进制文件路径（Mac系统，适配官网安装和Homebrew安装的路径）
+            // 路径1：官网安装的Firefox路径
+            File firefoxBinary = new File("/Applications/Firefox.app/Contents/MacOS/firefox");
+            // 路径2：Homebrew安装的Firefox路径（如果上面的路径不存在，用这个）
+            if (!firefoxBinary.exists()) {
+                firefoxBinary = new File("/Applications/Firefox Developer Edition.app/Contents/MacOS/firefox");
+            }
+            // 设置Firefox二进制路径（解决“找不到binary”的错误）
+            options.setBinary(firefoxBinary.toPath());
+
+            // Firefox的无头模式（新版支持--headless=new，旧版用--headless，这里兼容两者）
             options.addArguments("--headless=new");
-            options.addArguments("--disable-gpu");
-            options.addArguments("--no-sandbox");
-            options.addArguments("--disable-dev-shm-usage");
+            // 设置窗口大小（Firefox支持该参数）
             options.addArguments(String.format("--window-size=%d,%d", width, height));
+            // 禁用扩展（Firefox支持该参数）
             options.addArguments("--disable-extensions");
-            // 反检测配置
-            options.addArguments("--disable-blink-features=AutomationControlled");
-            options.setExperimentalOption("excludeSwitches", new String[]{"enable-automation"});
-            options.setExperimentalOption("useAutomationExtension", false);
-            // 创建驱动
-            WebDriver driver = new ChromeDriver(options);
-            ((JavascriptExecutor) driver).executeScript("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})");
-            // 超时配置
+            // 设置用户代理（Firefox支持该参数）
+            options.addArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+
+            // 可选：禁用Firefox的自动更新和弹窗（提升稳定性）
+            FirefoxProfile profile = new FirefoxProfile();
+            profile.setPreference("app.update.enabled", false);
+            profile.setPreference("browser.tabs.remote.autostart", false);
+            options.setProfile(profile);
+
+            // 3. 创建Firefox驱动
+            WebDriver driver = new FirefoxDriver(options);
+
+            // 4. 超时配置
             driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(30));
             driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+
             return driver;
         } catch (Exception e) {
-            log.error("初始化 Chrome 浏览器失败", e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "初始化 Chrome 浏览器失败");
+            log.error("初始化 Firefox 浏览器失败", e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "初始化 Firefox 浏览器失败");
         }
     }
 
     /**
-     * 生成网页截图
-     *
-     * @param webUrl 网页URL（支持短标识：如L8V4gM，会自动补全为http://localhost/L8V4gM）
-     * @return 压缩后的截图文件路径，失败返回null
+     * 生成网页截图（仅修改驱动调用方法，其余业务逻辑不变）
      */
     public static String saveWebPageScreenshot(String webUrl) {
         if (StrUtil.isBlank(webUrl)) {
@@ -68,14 +84,12 @@ public class WebScreenshotUtils {
             return null;
         }
 
-        // -------------------------- 核心修改：自动补全localhost前缀 --------------------------
+        // 自动补全localhost前缀（原有逻辑不变）
         String validUrl;
         try {
-            // 1. 如果是完整URL（包含http/https），直接使用
             new URL(webUrl);
             validUrl = webUrl;
         } catch (MalformedURLException e) {
-            // 2. 如果是短标识（如L8V4gM），自动拼接为http://localhost/ + 标识
             validUrl = "http://localhost/" + webUrl;
             log.info("传入的是短标识，自动补全为完整URL: {}", validUrl);
         }
@@ -84,15 +98,16 @@ public class WebScreenshotUtils {
         try {
             final int DEFAULT_WIDTH = 1600;
             final int DEFAULT_HEIGHT = 900;
-            webDriver = initChromeDriver(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+            // 关键修改：调用Firefox驱动初始化方法
+            webDriver = initFirefoxDriver(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 
-            // 创建临时目录
+            // 创建临时目录（原有逻辑不变）
             String rootPath = System.getProperty("user.dir") + File.separator + "tmp" + File.separator + "screenshots"
                     + File.separator + UUID.randomUUID().toString().substring(0, 8);
             FileUtil.mkdir(rootPath);
             // 原始截图路径
             String imageSavePath = rootPath + File.separator + RandomUtil.randomNumbers(5) + ".png";
-            // 访问**补全后的完整URL**
+            // 访问补全后的URL
             webDriver.get(validUrl);
             // 等待页面加载
             waitForPageLoad(webDriver);
@@ -111,20 +126,20 @@ public class WebScreenshotUtils {
             log.error("网页截图失败: {}", webUrl, e);
             return null;
         } finally {
-            // 关闭驱动
+            // 关闭驱动（修正日志提示为Firefox）
             if (webDriver != null) {
                 try {
                     webDriver.quit();
-                    log.info("ChromeDriver已成功关闭");
+                    log.info("FirefoxDriver已成功关闭");
                 } catch (Exception e) {
-                    log.error("关闭ChromeDriver失败", e);
+                    log.error("关闭FirefoxDriver失败", e);
                 }
             }
         }
     }
 
     /**
-     * 保存图片到文件
+     * 保存图片到文件（原有逻辑不变）
      */
     private static void saveImage(byte[] imageBytes, String imagePath) {
         try {
@@ -136,7 +151,7 @@ public class WebScreenshotUtils {
     }
 
     /**
-     * 压缩图片
+     * 压缩图片（原有逻辑不变）
      */
     private static void compressImage(String originalImagePath, String compressedImagePath) {
         final float COMPRESSION_QUALITY = 0.3f;
@@ -153,7 +168,7 @@ public class WebScreenshotUtils {
     }
 
     /**
-     * 等待页面加载完成
+     * 等待页面加载完成（原有逻辑不变）
      */
     private static void waitForPageLoad(WebDriver driver) {
         try {
@@ -168,5 +183,4 @@ public class WebScreenshotUtils {
             log.error("等待页面加载时出现异常，继续执行截图", e);
         }
     }
-
 }

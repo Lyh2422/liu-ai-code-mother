@@ -2,7 +2,7 @@ package com.lyh.liuaicodemother.ai;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.lyh.liuaicodemother.ai.tools.FileWriteTool;
+import com.lyh.liuaicodemother.ai.tools.*;
 import com.lyh.liuaicodemother.exception.BusinessException;
 import com.lyh.liuaicodemother.exception.ErrorCode;
 import com.lyh.liuaicodemother.model.enums.CodeGenTypeEnum;
@@ -38,6 +38,12 @@ public class AiCodeGeneratorServiceFactory {
     @Resource
     private RedisChatMemoryStore redisChatMemoryStore;
 
+    @Resource
+    private ChatHistoryService chatHistoryService;
+
+    @Resource
+    private ToolManager toolManager;
+
 
     /**
      * AI 服务实例缓存
@@ -55,8 +61,7 @@ public class AiCodeGeneratorServiceFactory {
             })
             .build();
 
-    @Autowired
-    private ChatHistoryService chatHistoryService;
+
 
     /**
      * 根据 appId获取服务(带缓存) 兼顾历史逻辑
@@ -91,7 +96,7 @@ public class AiCodeGeneratorServiceFactory {
                 .builder()
                 .id(appId)
                 .chatMemoryStore(redisChatMemoryStore)
-                .maxMessages(20)
+                .maxMessages(100)
                 .build();
         // 从数据库加载历史对话到记忆中
         chatHistoryService.loadChatHistoryToMemory(appId, chatMemory, 20);
@@ -101,7 +106,7 @@ public class AiCodeGeneratorServiceFactory {
             case VUE_PROJECT -> AiServices.builder(AiCodeGeneratorService.class)
                     .streamingChatModel(reasoningStreamingChatModel)
                     .chatMemoryProvider(memoryId -> chatMemory)
-                    .tools(new FileWriteTool())
+                    .tools(toolManager.getAllTools())
                     .hallucinatedToolNameStrategy(toolExecutionRequest -> ToolExecutionResultMessage.from(
                             toolExecutionRequest, "Error: there is no tool called " + toolExecutionRequest.name()
                     ))
